@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>City Weather</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='weather.css') }}" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="weather-card">
+        <h1>Current Weather</h1>
+        <form id="weather-form" class="weather-form">
+          <label for="city">Enter city name</label>
+          <div class="input-row">
+            <input id="city" name="city" type="text" placeholder="e.g. Seattle" autocomplete="off" />
+            <button type="submit">Lookup</button>
+          </div>
+        </form>
+
+        <div id="message" class="message"></div>
+
+        <div id="weather-result" class="weather-result hidden">
+          <div class="weather-header">
+            <div>
+              <p class="weather-location" id="weather-location"></p>
+              <p class="weather-description" id="weather-description"></p>
+            </div>
+            <img id="weather-icon" alt="Weather icon" />
+          </div>
+          <div class="weather-details">
+            <div class="weather-card-detail">
+              <span>Temperature</span>
+              <strong id="weather-temperature"></strong>
+            </div>
+            <div class="weather-card-detail">
+              <span>Feels like</span>
+              <strong id="weather-feels"></strong>
+            </div>
+            <div class="weather-card-detail">
+              <span>Humidity</span>
+              <strong id="weather-humidity"></strong>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <script src="{{ url_for('static', filename='weather.js') }}"></script>
+  </body>
+</html>
