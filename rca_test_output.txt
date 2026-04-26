@@ -1,0 +1,42 @@
+## Fault Analysis
+
+**FAULT PRESENT: YES - CAVITATION**
+
+## Pattern Analysis
+
+The observed z-score pattern matches the cavitation fingerprint:
+
+| Tag                | Observed | Expected (Cavitation) | Match |
+|-------------------|----------|----------------------|-------|
+| PUMP_FLOW         | -14.90   | large -              | ✓ |
+| PUMP_INLET_PRESS  | -4.04    | large -              | ✓ |
+| PUMP_OUTLET_PRESS | +0.18    | neutral              | ✓ |
+| PUMP_VIBRATION    | +12.54   | large +              | ✓ |
+| PUMP_MOTOR_CURRENT| +1.86    | slight +             | ✓ |
+| PUMP_BEARING_TEMP | -0.04    | neutral              | ✓ |
+
+## Key Discriminators Confirm Cavitation:
+- **Flow drastically reduced** (-14.90 z-score) with **inlet pressure severely low** (-4.04 z-score) - classic cavitation signature
+- **Outlet pressure unchanged** (+0.18 z-score) rules out plugged discharge
+- **Bearing temperature normal** (-0.04 z-score) rules out bearing wear
+- **Extreme vibration spike** (+12.54 z-score) confirms vapor bubble collapse characteristic of cavitation
+
+## Recommended Immediate Actions:
+
+### 1. **IMMEDIATE (Next 15 minutes)**
+- Reduce pump speed/throttle discharge valve to decrease NPSH required
+- Check suction strainer for blockage
+- Verify suction tank level and venting
+
+### 2. **TRIAGE (Next 2 hours)**
+- Calculate actual vs required NPSH
+- Inspect suction piping for air leaks
+- Check if upstream process changes reduced inlet pressure
+- Monitor vibration trend - sustained cavitation causes rapid impeller damage
+
+### 3. **MONITORING**
+- Increase vibration monitoring frequency to every 15 minutes
+- Track inlet pressure recovery
+- Alert if vibration exceeds +15 z-score (imminent damage threshold)
+
+**PRIORITY: HIGH** - Cavitation causes rapid mechanical damage. Address root cause of low inlet pressure immediately.

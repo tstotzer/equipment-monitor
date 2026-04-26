@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Backend (uvicorn)",
+      "type": "shell",
+      "command": "python",
+      "args": ["-m", "uvicorn", "backend:app", "--reload", "--host", "127.0.0.1", "--port", "8000"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "close": false
+      },
+      "runOptions": { "runOn": "folderOpen" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "uvicorn",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Started reloader process",
+          "endsPattern": "Application startup complete"
+        }
+      }
+    }
+  ]
+}
