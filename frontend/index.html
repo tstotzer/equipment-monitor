@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pump Monitor</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -48,6 +49,20 @@
     }
 
     header input[type="number"] { width: 75px; }
+
+    .ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .ctrl-hint {
+      font-size: 0.68rem;
+      opacity: 0.65;
+      line-height: 1;
+    }
+
+    .btn-download { background: #0277bd; color: #fff; }
 
     .btn {
       padding: 7px 16px;
@@ -164,14 +179,49 @@
     #rca-result {
       margin-top: 14px;
       font-size: 0.88rem;
-      line-height: 1.65;
-      white-space: pre-wrap;
+      line-height: 1.7;
       color: #333;
       background: #f8f9fb;
       border: 1px solid #e4e7ed;
       border-radius: 5px;
-      padding: 14px 16px;
+      padding: 16px 20px;
       min-height: 64px;
+    }
+
+    #rca-result p { margin: 0 0 10px; }
+    #rca-result p:last-child { margin-bottom: 0; }
+
+    #rca-result h1, #rca-result h2, #rca-result h3 {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #1a237e;
+      margin: 14px 0 6px;
+    }
+    #rca-result h1:first-child,
+    #rca-result h2:first-child,
+    #rca-result h3:first-child { margin-top: 0; }
+
+    #rca-result ul, #rca-result ol {
+      margin: 0 0 10px 18px;
+      padding: 0;
+    }
+    #rca-result li { margin-bottom: 4px; }
+
+    #rca-result strong { color: #111; font-weight: 700; }
+    #rca-result em { color: #555; }
+
+    #rca-result code {
+      background: #eef0f4;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 0.82rem;
+      font-family: monospace;
+    }
+
+    #rca-result hr {
+      border: none;
+      border-top: 1px solid #e4e7ed;
+      margin: 12px 0;
     }
 
     .hidden { display: none !important; }
@@ -184,6 +234,13 @@
   <span id="conn-dot" style="width:10px;height:10px;border-radius:50%;background:#e53935;display:inline-block;margin-right:4px;flex-shrink:0;transition:background 0.4s;" title="Backend connection status"></span>
   <span id="conn-label" style="font-size:0.78rem;opacity:0.85;margin-right:auto;">Connecting…</span>
 
+  <div class="ctrl-group">
+    <label for="durationHrs">Duration (hrs)</label>
+    <input type="number" id="durationHrs" value="8" min="0.1" max="93.3" step="0.1"
+           oninput="if(+this.value>93.3)this.value=93.3" />
+    <span class="ctrl-hint">max 93.3 hrs</span>
+  </div>
+
   <label for="faultType">Fault Type</label>
   <select id="faultType">
     <option value="none">None (Normal)</option>
@@ -193,11 +250,16 @@
     <option value="plugged_discharge">Plugged Discharge</option>
   </select>
 
-  <label for="faultStart">Fault Start (min)</label>
-  <input type="number" id="faultStart" value="240" min="0" max="479" />
+  <div class="ctrl-group">
+    <label for="faultStart">Fault Start (hrs)</label>
+    <input type="number" id="faultStart" value="4" min="0" max="93.3" step="0.1"
+           oninput="if(+this.value>93.3)this.value=93.3" />
+    <span class="ctrl-hint">max 93.3 hrs</span>
+  </div>
 
   <button class="btn btn-start" id="startBtn">Start</button>
   <button class="btn btn-stop"  id="stopBtn">Stop</button>
+  <button class="btn btn-download" id="downloadBtn">Download CSV</button>
 </header>
 
 <div id="status-bar">No simulation running. Press Start to begin.</div>
@@ -318,8 +380,10 @@
       });
 
       const count = times.length;
+      const total = data.total || count;
+      const pct = total ? Math.round(count / total * 100) : 100;
       document.getElementById('status-bar').textContent = data.is_running
-        ? `Simulation running — ${count} / 480 samples`
+        ? `Simulation running — ${count} / ${total} samples (${pct}%)`
         : `Simulation complete — ${count} samples`;
     } catch {
       // backend not reachable yet
@@ -349,8 +413,11 @@
 
   // ── Start ───────────────────────────────────────────────────
   document.getElementById('startBtn').addEventListener('click', async () => {
-    const fault_type  = document.getElementById('faultType').value;
-    const fault_start = parseInt(document.getElementById('faultStart').value, 10);
+    const fault_type     = document.getElementById('faultType').value;
+    const faultStartHrs  = parseFloat(document.getElementById('faultStart').value) || 0;
+    const fault_start    = Math.round(faultStartHrs * 60);
+    const durationHrs    = parseFloat(document.getElementById('durationHrs').value) || 8;
+    const duration       = Math.min(Math.round(durationHrs * 60), 5600);
 
     // Reset charts
     TAGS.forEach(tag => {
@@ -366,7 +433,7 @@
       await fetch(`${API}/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ fault_type, fault_start }),
+        body: JSON.stringify({ fault_type, fault_start, duration }),
       });
       document.getElementById('status-bar').textContent = 'Starting simulation...';
       startPolling();
@@ -405,13 +472,51 @@
     try {
       const res  = await fetch(`${API}/analyze`, { method: 'POST' });
       const data = await res.json();
-      result.textContent = res.ok ? data.diagnosis : `Error: ${data.detail}`;
+      if (res.ok) {
+        result.innerHTML = marked.parse(data.diagnosis);
+      } else {
+        result.textContent = `Error: ${data.detail}`;
+      }
     } catch {
       result.textContent = 'Failed to reach backend.';
     } finally {
       btn.disabled = false;
       spinner.classList.add('hidden');
     }
+  });
+
+  // ── Download CSV ─────────────────────────────────────────────
+  document.getElementById('downloadBtn').addEventListener('click', async () => {
+    let data;
+    try {
+      const res = await fetch(`${API}/history`);
+      data = await res.json();
+    } catch {
+      alert('Could not reach the backend.');
+      return;
+    }
+
+    if (!data.history || !data.history.time || data.history.time.length === 0) {
+      alert('No simulation data to download. Run a simulation first.');
+      return;
+    }
+
+    const cols = ['time', ...TAGS];
+    const header = cols.join(',');
+    const rows = data.history.time.map((t, i) =>
+      cols.map(c => c === 'time' ? t : (data.history[c] != null ? data.history[c][i] : '')).join(',')
+    );
+    const csv = [header, ...rows].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = 'pump_simulation.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   });
 
   // Start polling on load to pick up any existing state

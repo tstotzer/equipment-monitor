@@ -82,14 +82,14 @@ def pump_process(env, fault_type=None, fault_start=None, fault_ramp=60):
         yield env.timeout(SAMPLE_INTERVAL)
 
 
-def run_simulation(fault_type=None, fault_start=240):
+def run_simulation(fault_type=None, fault_start=240, duration=SIM_DURATION):
     """Run the simulation and return a DataFrame of tag history."""
     global tag_log
     tag_log = []
 
     env = simpy.Environment()
     env.process(pump_process(env, fault_type=fault_type, fault_start=fault_start))
-    env.run(until=SIM_DURATION)
+    env.run(until=duration)
 
     return pd.DataFrame(tag_log)
 

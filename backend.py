@@ -61,6 +61,7 @@ state = SimState()
 class StartRequest(BaseModel):
     fault_type: str = "none"
     fault_start: int = 240
+    duration: int = 480
 
 
 @app.post("/start")
@@ -72,9 +73,10 @@ def start_simulation(req: StartRequest):
     state._stop.clear()
 
     fault_type = None if req.fault_type == "none" else req.fault_type
+    duration = max(1, min(req.duration, 5600))
 
     def worker():
-        df = run_simulation(fault_type=fault_type, fault_start=req.fault_start)
+        df = run_simulation(fault_type=fault_type, fault_start=req.fault_start, duration=duration)
         total = len(df)
 
         with state._lock:
@@ -117,11 +119,12 @@ def get_tags():
 def get_history():
     with state._lock:
         if state.df is None or state.cursor == 0:
-            return {"history": {}, "is_running": False}
+            return {"history": {}, "is_running": False, "total": 0}
         subset = state.df.iloc[: state.cursor].copy()
         is_running = state.is_running
+        total = len(state.df)
 
-    return {"history": subset.to_dict(orient="list"), "is_running": is_running}
+    return {"history": subset.to_dict(orient="list"), "is_running": is_running, "total": total}
 
 
 @app.post("/analyze")
