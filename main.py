@@ -10,15 +10,6 @@ from pydantic import BaseModel
 from simulator import NORMAL_PARAMS, run_simulation
 from agent import run_analysis
 
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
-
-@app.get("/")
-def serve_frontend():
-    return FileResponse("frontend/index.html")
-
 app = FastAPI(title="Pump Monitor API")
 
 app.add_middleware(
@@ -156,3 +147,13 @@ def stop_simulation():
     with state._lock:
         state.is_running = False
     return {"status": "stopped"}
+
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+@app.get("/")
+def serve_frontend():
+    return FileResponse("frontend/index.html")
