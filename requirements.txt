@@ -4,3 +4,4 @@ simpy
 numpy
 pandas
 anthropic
+matplotlib
