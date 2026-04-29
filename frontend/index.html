@@ -225,6 +225,14 @@
     }
 
     .hidden { display: none !important; }
+
+    #status-bar.complete {
+      background: #e8f5e9;
+      color: #1b5e20;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border-bottom-color: #a5d6a7;
+    }
   </style>
 </head>
 <body>
@@ -296,6 +304,15 @@
     PUMP_BEARING_TEMP:  '#edc948',
   };
 
+  const UNITS = {
+    PUMP_FLOW:          'GPM',
+    PUMP_INLET_PRESS:   'bar',
+    PUMP_OUTLET_PRESS:  'bar',
+    PUMP_VIBRATION:     'mm/s',
+    PUMP_MOTOR_CURRENT: 'A',
+    PUMP_BEARING_TEMP:  '°C',
+  };
+
   const charts = {};
 
   // ── Build chart cards ───────────────────────────────────────
@@ -344,6 +361,7 @@
           },
           y: {
             ticks: { font: { size: 10 } },
+            title: { display: true, text: UNITS[tag] || '', font: { size: 10 } },
           },
         },
       },
@@ -381,9 +399,14 @@
       const count = times.length;
       const total = data.total || count;
       const pct = total ? Math.round(count / total * 100) : 100;
-      document.getElementById('status-bar').textContent = data.is_running
-        ? `Simulation running — ${count} / ${total} samples (${pct}%)`
-        : `Simulation complete — ${count} samples`;
+      const bar = document.getElementById('status-bar');
+      if (data.is_running) {
+        bar.className = '';
+        bar.textContent = `Simulation running — ${count} / ${total} samples (${pct}%)`;
+      } else {
+        bar.className = 'complete';
+        bar.textContent = `✓ Simulation complete — ${count} samples`;
+      }
     } catch {
       // backend not reachable yet
     }
